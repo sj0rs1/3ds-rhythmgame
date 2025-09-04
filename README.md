@@ -1,9 +1,14 @@
-To run on PC, install nest (https://github.com/lovebrew/nest)
+## Run on PC
+- Install [LÖVE](https://love2d.org)  
+- Download [Nest](https://github.com/lovebrew/nest)  
+- Place the `nest` folder inside the game’s folder  
+- Run the game with LÖVE  
 
-To run on 3ds:
+## Run on 3DS
+- Make sure you have the Homebrew Launcher on your 3DS  
+- Install [LÖVE Potion](https://lovebrew.org/getting-started/get-lovepotion)  
+- Create a folder called `game` inside `lovepotion` and extract the game there  
+- Open the LÖVE Potion app on your Homebrew Launcher  
 
-Make sure you have the homebrew launcher on your 3ds
-Install LÖVE Potion (https://lovebrew.org/getting-started/get-lovepotion)
-Now create a folder called game inside of the lovepotion and extract the game in that folder
-
-Now open the LÖVE Potion application on your homebrew launcher
+## Controls
+- Click → Left Shoulder / Q
