@@ -1,0 +1,250 @@
+local scene = {}
+local circles = {}
+local hitScores = {}
+
+local white = 1
+local firsttouch = false
+local startgame = false
+
+local currentX = -20
+local currentY = -20
+local score = 0
+local combo = 0
+
+local gameCounter = 0
+
+local circleCount = 0
+local hitScoreCount = 0
+
+finishCount = 0
+
+function makeCircle(x, y, size, color, number, approach, active)
+    table.insert(circles, {
+        x = x,
+        y = y,
+        size = size,
+        activefrom = active,
+        approachtime = approach,
+        approachtotal = approach,
+        id = circleCount,
+        color = color,
+        number = number
+    })
+    circleCount = circleCount + 1
+end
+
+function makeHitScore(x, y, text, color)
+    table.insert(hitScores, {
+        text = text,
+        x = x,
+        y = y,
+        color = color,
+        id = hitScoreCount,
+        time = gameCounter + 60
+    })
+    hitScoreCount = hitScoreCount + 1
+end
+
+function removeCircle(id)
+    for i, circle in pairs(circles) do
+        if circle.id == id then
+            table.remove(circles, i)
+            break
+        end
+    end
+end
+
+function removeHitScore(id)
+    for i, hitscore in pairs(hitScores) do
+        if hitscore.id == id then
+            table.remove(hitScores, i)
+            break
+        end
+    end
+end
+
+function love.touchpressed(id, x, y, dx, dy, pressure)
+    if not game.ingame then return end
+    firsttouch = true
+    currentX = x
+    currentY = y
+end
+
+function love.touchreleased(id)
+    currentX = -20
+    currentY = -20
+end
+
+function love.touchmoved(id, x, y, dx, dy, pressure)
+    if not game.ingame then return end
+    currentX = x
+    currentY = y
+end
+
+function getTouchingCircle()
+    for i, circle in pairs(circles) do
+        if gameCounter >= circle.activefrom then
+            local circleCenterX = circle.x + circle.size
+            local circleCenterY = circle.y + circle.size
+
+            local dx = circleCenterX - currentX
+            local dy = circleCenterY - currentY
+
+            local rSum = circle.size + 5
+            if dx * dx + dy * dy <= rSum * rSum then
+                return circle
+            end
+        end
+    end
+    return nil
+end
+
+function updateCircles()
+    for i, v in pairs(circles) do
+        if gameCounter >= v.activefrom then
+            v.approachtime = math.max(-3, v.approachtime - 1)
+            if v.approachtime <= -3 then
+                makeHitScore(v.x + 40 + v.size / 2 - 3, v.y + v.size / 2 - 3, 'X', { 1, 0, 0 })
+                combo = 0
+                circles[i] = nil
+            end
+        end
+    end
+end
+
+function updateHitScores()
+    for i, v in pairs(hitScores) do
+        if gameCounter >= v.time then
+            hitScores[i] = nil;
+        end
+    end
+end
+
+scene.updateScene = function()
+    if not startgame and firsttouch and white <= 0 then
+        startgame = true
+    end
+    if not startgame then return end
+    gameCounter = gameCounter + 1
+    updateCircles()
+    updateHitScores()
+end
+
+scene.checkInput = function(button)
+    if not startgame then return end
+    if button == 'leftshoulder' then
+        local circle = getTouchingCircle()
+        if circle then
+            local at = circle.approachtime
+            if at <= 15 then
+                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '300', { 0, 0, 1 })
+                score = score + 300
+                combo = combo + 1
+            elseif at <= 30 then
+                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '100', { 0, 0.5, 0 })
+                score = score + 100
+                combo = combo + 1
+            elseif at <= 35 then
+                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '50', { 0.8, 0, 0 })
+                score = score + 50
+                combo = combo + 1
+            else
+                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, 'X', { 1, 0, 0 })
+                combo = 0
+            end
+            removeCircle(circle.id)
+        end
+    end
+end
+
+scene.drawGame = function(screen)
+    love.graphics.setFont(game.fonts.basicsmall)
+    if screen ~= 'bottom' then
+        --borders
+        love.graphics.setColor(0.15, 0.15, 0.15, 1)
+        love.graphics.rectangle('fill', 0, 0, 40, 240)
+        love.graphics.rectangle('fill', 360, 0, 400, 400)
+
+        love.graphics.setColor(1, 1, 1, 1)
+
+        --corners
+        love.graphics.line(40, 1, 40, 11)
+        love.graphics.line(40, 1, 50, 1)
+
+        love.graphics.line(40, 229, 40, 239)
+        love.graphics.line(40, 239, 50, 239)
+
+        love.graphics.line(360, 1, 350, 1)
+        love.graphics.line(360, 1, 360, 11)
+
+        love.graphics.line(360, 239, 350, 239)
+        love.graphics.line(360, 229, 360, 239)
+
+        --draw hitscores
+        for i, v in pairs(hitScores) do
+            love.graphics.setColor(v.color[1], v.color[2], v.color[3], 1)
+            love.graphics.print(v.text, v.x, v.y)
+        end
+
+        --draw click circles
+        if startgame then
+            for i = #circles, 1, -1 do
+                local v = circles[i]
+                if v and gameCounter >= v.activefrom then
+                    local size = v.size
+
+                    --white outline
+                    love.graphics.setColor(1, 1, 1, 0.8)
+                    love.graphics.circle("fill", v.x + 40 + size, v.y + size, size + 2)
+
+                    --circle
+                    love.graphics.setColor(v.color[1], v.color[2], v.color[3], 1)
+                    love.graphics.circle("fill", v.x + 40 + size, v.y + size, size)
+
+                    --approach circle
+                    love.graphics.setColor(1, 1, 1, 0.8)
+                    if v.approachtime >= 0 then
+                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
+                            size + (30 * v.approachtime / v.approachtotal))
+                    end
+
+                    --number text
+                    love.graphics.setColor(0, 0, 0, 1)
+                    love.graphics.printf(tostring(v.number), v.x + 41, v.y + 10, v.size * 2, "center")
+                    love.graphics.setColor(1, 1, 1, 1)
+                    love.graphics.printf(tostring(v.number), v.x + 40, v.y + 9, v.size * 2, "center")
+                end
+            end
+        end
+
+        --draw cursor
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.circle("fill", currentX + 40, currentY, 5)
+    else
+        love.graphics.circle("fill", currentX, currentY, 5)
+        love.graphics.setColor(0.3, 0.3, 0.3, 1)
+        love.graphics.rectangle('fill', 0, 0, 320, 240)
+
+        if currentX == -20 and not firsttouch then
+            love.graphics.setColor(1, 1, 1, 0.2)
+            love.graphics.rectangle('fill', 50, 50, 320 - 50 * 2, 240 - 50 * 2)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf("Touch here!", 0, 105, 320, "center")
+        end
+
+        love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.setFont(game.fonts.basictiny)
+        love.graphics.print('score: ' .. tostring(score), 2, 210)
+        love.graphics.print('combo: ' .. tostring(combo) .. 'x', 2, 224)
+    end
+    if white > 0 then
+        white = white - 0.01
+        love.graphics.setColor(1, 1, 1, white)
+        love.graphics.rectangle('fill', 0, 0, 400, 240)
+    end
+end
+
+--load chart
+require('charts/' .. game.selectedChart)
+
+return scene
