@@ -1,4 +1,4 @@
-local scene = {}
+local scene = { fadeout = true }
 local circles = {}
 local hitScores = {}
 
@@ -16,7 +16,7 @@ local gameCounter = 0
 local circleCount = 0
 local hitScoreCount = 0
 
-finishCount = 0
+local resetTriggered = false
 
 function makeCircle(x, y, size, color, number, approach, active)
     table.insert(circles, {
@@ -92,7 +92,7 @@ function getTouchingCircle()
 
             local rSum = circle.size + 5
             if dx * dx + dy * dy <= rSum * rSum then
-                return circle
+                return circle, i
             end
         end
     end
@@ -106,7 +106,7 @@ function updateCircles()
             if v.approachtime <= -3 then
                 makeHitScore(v.x + 40 + v.size / 2 - 3, v.y + v.size / 2 - 3, 'X', { 1, 0, 0 })
                 combo = 0
-                circles[i] = nil
+                table.remove(circles, i)
             end
         end
     end
@@ -115,49 +115,65 @@ end
 function updateHitScores()
     for i, v in pairs(hitScores) do
         if gameCounter >= v.time then
-            hitScores[i] = nil;
+            table.remove(hitScores, i)
         end
     end
 end
 
-scene.updateScene = function()
+scene.update = function()
+    if resetTriggered and white <= 0 then
+        resetTriggered = false
+        game.reset()
+    end
     if not startgame and firsttouch and white <= 0 then
         startgame = true
     end
     if not startgame then return end
+    if not game.chart then return end
+    if gameCounter >= game.chart.finishCount and not resetTriggered then
+        resetTriggered = true
+        scene.fadeout = false
+        white = 1
+        return
+    end
     gameCounter = gameCounter + 1
     updateCircles()
     updateHitScores()
 end
 
-scene.checkInput = function(button)
+scene.handleInput = function(button)
     if not startgame then return end
     if button == 'leftshoulder' then
-        local circle = getTouchingCircle()
+        local circle, index = getTouchingCircle()
         if circle then
-            local at = circle.approachtime
-            if at <= 15 then
-                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '300', { 0, 0, 1 })
-                score = score + 300
-                combo = combo + 1
-            elseif at <= 30 then
-                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '100', { 0, 0.5, 0 })
-                score = score + 100
-                combo = combo + 1
-            elseif at <= 35 then
-                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '50', { 0.8, 0, 0 })
-                score = score + 50
-                combo = combo + 1
-            else
+            if index == 1 then -- correct circle
+                local at = circle.approachtime
+                if at <= 12 then
+                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '300', { 0, 0, 1 })
+                    score = score + 300
+                    combo = combo + 1
+                elseif at <= 17 then
+                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '100',
+                        { 0, 0.5, 0 })
+                    score = score + 100
+                    combo = combo + 1
+                elseif at <= 23 then
+                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '50', { 0.8, 0, 0 })
+                    score = score + 50
+                    combo = combo + 1
+                else
+                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, 'X', { 1, 0, 0 })
+                    combo = 0
+                end
+                removeCircle(circle.id)
+            else -- incorrect circle (wrong order)
                 makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, 'X', { 1, 0, 0 })
-                combo = 0
             end
-            removeCircle(circle.id)
         end
     end
 end
 
-scene.drawGame = function(screen)
+scene.draw = function(screen)
     love.graphics.setFont(game.fonts.basicsmall)
     if screen ~= 'bottom' then
         --borders
@@ -236,15 +252,39 @@ scene.drawGame = function(screen)
         love.graphics.setFont(game.fonts.basictiny)
         love.graphics.print('score: ' .. tostring(score), 2, 210)
         love.graphics.print('combo: ' .. tostring(combo) .. 'x', 2, 224)
+
+        if game.debug then
+            local a = 0
+            for i, v in pairs(circles) do
+                a = a + 1
+                love.graphics.print(tostring(i) .. ' ' .. tostring(v), 0, a * 20 - 20)
+            end
+        end
     end
     if white > 0 then
         white = white - 0.01
-        love.graphics.setColor(1, 1, 1, white)
+        love.graphics.setColor(1, 1, 1, scene.fadeout and white or 1 - white)
         love.graphics.rectangle('fill', 0, 0, 400, 240)
     end
 end
 
---load chart
-require('charts/' .. game.selectedChart)
+scene.reset = function()
+    circles = {}
+    hitScores = {}
+
+    white = 1
+    firsttouch = false
+    startgame = false
+
+    currentX = -20
+    currentY = -20
+    score = 0
+    combo = 0
+
+    gameCounter = 0
+
+    circleCount = 0
+    hitScoreCount = 0
+end
 
 return scene

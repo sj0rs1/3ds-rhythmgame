@@ -1,4 +1,4 @@
--- function makeCircle(x, y, size, color, number, approach, active)
+local chart = {finishCount = 1120}
 
 makeCircle(40,  40, 20, { 1.0, 0.2, 0.2 }, 1, 60, 0)
 makeCircle(120, 60, 20, { 1.0, 0.2, 0.2 }, 2, 60, 50)
@@ -49,4 +49,8 @@ makeCircle(100, 100,20, { 1.0, 1.0, 1.0 }, 1, 60, 1000)
 makeCircle(160, 100,20, { 1.0, 1.0, 1.0 }, 2, 60, 1015)
 makeCircle(220, 100,20, { 1.0, 1.0, 1.0 }, 3, 60, 1030)
 
-finishCount = 1050
+chart.draw = function(screen)
+
+end
+
+return chart

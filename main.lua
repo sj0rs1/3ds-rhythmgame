@@ -3,20 +3,36 @@ is3ds = string.lower(love._console) == '3ds' and love.system.getOS() == 'Horizon
 fontExtension = is3ds and '.bcfnt' or '.ttf'
 imageExtension = is3ds and '.t3x' or '.png'
 
-local touches = {}
+homescreen = nil
+scene = nil
+
 game = {
+    debug = false,
     fonts = {},
     homescreen = true,
+    songselect = false,
     ingame = false,
-    selectedChart = 'chart1',
+    selectedChart = '',
+    chart = nil,
+    reset = function()
+        package.loaded['charts/'..game.selectedChart] = nil
+
+        game.ingame = false
+        game.songselect = false
+        game.homescreen = true
+        game.chart = nil
+        game.selectedChart = ''
+        
+        homescreen.reset()
+        scene.reset()
+    end
 }
 
-local homescreen = require("scripts/homescreen")
-local scene = require("scripts/scene")
+homescreen = require("scripts/homescreen")
+scene = require("scripts/scene")
 
 local targetFPS = 60
 local accumulator = 0
-
 
 function love.load()
     love.graphics.set3D(false)
@@ -34,19 +50,22 @@ function love.update(dt)
     accumulator = accumulator - 1 / targetFPS
 
     if game.homescreen then
-        homescreen.moveDots()
+        homescreen.update()
     end
     if game.ingame then
-        scene.updateScene()
+        scene.update()
     end
 end
 
 function love.draw(screen)
     if game.homescreen then
-        homescreen.drawHomescreen(screen)
+        homescreen.draw(screen)
     end
     if game.ingame then
-        scene.drawGame(screen)
+        if game.chart and game.chart.draw then
+            game.chart.draw(screen)
+        end
+        scene.draw(screen)
     end
 end
 
@@ -55,6 +74,6 @@ function love.gamepadpressed(joystick, button)
         homescreen.handleInput(button)
     end
     if game.ingame then
-        scene.checkInput(button)
+        scene.handleInput(button)
     end
 end

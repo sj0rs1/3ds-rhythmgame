@@ -1,15 +1,8 @@
 local homescreen = {}
 local dots = {}
 local menuIndex = 1
-
-local tempcount = 0
-
-for i = 1, 5 do
-    table.insert(dots, {
-        x = (i - 1) * -25,
-        y = i * -30,
-    })
-end
+local songIndex = 1
+local charts = love.filesystem.getDirectoryItems('charts')
 
 for i = 1, 5 do
     table.insert(dots, {
@@ -26,21 +19,40 @@ end
 
 homescreen.handleInput = function(button)
     if button == 'dpup' then
-        menuIndex = math.max(menuIndex - 1, 1)
+        if game.songselect then
+            songIndex = math.max(songIndex - 1, 1)
+        else
+            menuIndex = math.max(menuIndex - 1, 1)
+        end
     elseif button == 'dpdown' then
-        menuIndex = math.min(menuIndex + 1, 2)
+        if game.songselect then
+            songIndex = math.min(songIndex + 1, #charts)
+        else
+            menuIndex = math.min(menuIndex + 1, 2)
+        end
     end
 
-    if button == 'a' then
-        if menuIndex == 1 then -- play
+    if game.songselect then
+        if button == 'a' then
+            game.selectedChart = charts[songIndex]:sub(1, -5)
+            game.chart = require('charts/' .. game.selectedChart)
+            scene.fadeout = true
             unInithomescreen()
-        elseif menuIndex == 2 then -- quit
-            love.event.quit()
+        elseif button == 'b' then
+            game.songselect = false
+        end
+    else
+        if button == 'a' then
+            if menuIndex == 1 then     -- play
+                game.songselect = true
+            elseif menuIndex == 2 then -- quit
+                love.event.quit()
+            end
         end
     end
 end
 
-homescreen.moveDots = function()
+homescreen.update = function()
     for i, v in pairs(dots) do
         v.x = v.x + 2
         v.y = v.y + 2
@@ -49,15 +61,11 @@ homescreen.moveDots = function()
             v.y = (v.y + 1) % 250
         end
     end
-    if tempcount == 60 then
-        tempcount = 0
-    end
-    tempcount = tempcount + 1
 end
 
-homescreen.drawHomescreen = function(screen)
+homescreen.draw = function(screen)
     if screen ~= 'bottom' then
-        love.graphics.setColor(0.968, 0.956, 0.917, 1)
+        love.graphics.setColor(0.8,0.85,0.75, 0.7)
         love.graphics.rectangle('fill', 0, 0, 400, 240)
 
         love.graphics.setColor(0.658, 0.733, 0.639, 1)
@@ -82,19 +90,29 @@ homescreen.drawHomescreen = function(screen)
         love.graphics.setColor(0.6, 0.8, 0.6, 1)
         love.graphics.print('EXIT', 25, 150)
 
-        local pointerpos = 120 + (menuIndex-1) * 30
-        love.graphics.setColor(0.2, 0.2, 0.2, 1)
-        love.graphics.print('>', 6, pointerpos - 1)
-        love.graphics.setColor(0.6, 0.8, 0.6, 1)
-        love.graphics.print('>', 7, pointerpos)
+        if not game.songselect then
+            local pointerpos = 120 + (menuIndex - 1) * 30
+            love.graphics.setColor(0.2, 0.2, 0.2, 1)
+            love.graphics.print('>', 6, pointerpos - 1)
+            love.graphics.setColor(0.6, 0.8, 0.6, 1)
+            love.graphics.print('>', 7, pointerpos)
+        end
     else
-        love.graphics.setColor(0.968, 0.956, 0.917, 0.95)
+        love.graphics.setColor(0.8,0.85,0.75, 0.6)
         love.graphics.rectangle('fill', 0, 0, 320, 240)
 
-        love.graphics.setColor(0,0,0,1)
-        love.graphics.print(tostring(tempcount))
-    end
+        if game.songselect then
+            love.graphics.setColor(0.8, 0.8, 0.8, 1)
+            love.graphics.rectangle('fill', 30, 30, 320 - 30 * 2, 240 - 30 * 2)
 
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.setFont(game.fonts.basicsmall)
+            love.graphics.print('>', 34, 34 + (songIndex - 1) * 22)
+            for i, v in ipairs(charts) do
+                love.graphics.print(v:sub(1, -5), i == songIndex and 52 or 34, 34 + (i - 1) * 22)
+            end
+        end
+    end
     if fadeout then
         if fadeouttimer == 100 then
             game.homescreen = false
@@ -103,9 +121,17 @@ homescreen.drawHomescreen = function(screen)
         else
             fadeouttimer = fadeouttimer + 1
         end
-        love.graphics.setColor(0.95, 0.95, 0.95, fadeouttimer/100)
+
+        love.graphics.setColor(0.95, 0.95, 0.95, fadeouttimer / 100)
         love.graphics.rectangle('fill', 0, 0, 400, 240)
     end
+end
+
+homescreen.reset = function()
+    fadeouttimer = 0
+    fadeout = false
+    menuIndex = 1
+    songIndex = 1
 end
 
 return homescreen
