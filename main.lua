@@ -7,22 +7,26 @@ homescreen = nil
 scene = nil
 
 game = {
-    debug = false,
+    debug = true,
     fonts = {},
     homescreen = true,
     songselect = false,
     ingame = false,
     selectedChart = '',
     chart = nil,
+    music = nil,
+    paused = false,
     reset = function()
-        package.loaded['charts/'..game.selectedChart] = nil
+        game.music:stop()
+        package.loaded['charts/' .. game.selectedChart .. '/chart'] = nil
 
         game.ingame = false
         game.songselect = false
         game.homescreen = true
         game.chart = nil
+        game.music = nil
         game.selectedChart = ''
-        
+
         homescreen.reset()
         scene.reset()
     end
@@ -62,9 +66,6 @@ function love.draw(screen)
         homescreen.draw(screen)
     end
     if game.ingame then
-        if game.chart and game.chart.draw then
-            game.chart.draw(screen)
-        end
         scene.draw(screen)
     end
 end

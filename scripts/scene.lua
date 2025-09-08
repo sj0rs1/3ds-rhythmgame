@@ -120,14 +120,27 @@ function updateHitScores()
     end
 end
 
+local initializedChart = false
+function initChart()
+    initializedChart = true
+    for _, v in pairs(game.chart.circles) do
+        makeCircle(v[1], v[2], v[3], v[4], v[5], v[6], v[7])
+    end
+end
+
 scene.update = function()
     if resetTriggered and white <= 0 then
         resetTriggered = false
         game.reset()
+        return
     end
-    if not startgame and firsttouch and white <= 0 then
+    if not initializedChart then
+        initChart()
+    end
+    if not startgame and initializedChart and firsttouch and white <= 0 then
         startgame = true
     end
+    if game.paused then return end
     if not startgame then return end
     if not game.chart then return end
     if gameCounter >= game.chart.finishCount and not resetTriggered then
@@ -137,37 +150,46 @@ scene.update = function()
         return
     end
     gameCounter = gameCounter + 1
+    if gameCounter == 1 then
+        game.music:play()
+    end
     updateCircles()
     updateHitScores()
 end
 
 scene.handleInput = function(button)
     if not startgame then return end
-    if button == 'leftshoulder' then
-        local circle, index = getTouchingCircle()
-        if circle then
-            if index == 1 then -- correct circle
-                local at = circle.approachtime
-                if at <= 12 then
-                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '300', { 0, 0, 1 })
-                    score = score + 300
-                    combo = combo + 1
-                elseif at <= 17 then
-                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '100',
-                        { 0, 0.5, 0 })
-                    score = score + 100
-                    combo = combo + 1
-                elseif at <= 23 then
-                    makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '50', { 0.8, 0, 0 })
-                    score = score + 50
-                    combo = combo + 1
-                else
+    if game.paused then
+    else
+        if button == 'leftshoulder' then
+            local circle, index = getTouchingCircle()
+            if circle then
+                if index == 1 then -- correct circle
+                    local at = circle.approachtime
+                    if at <= 12 then
+                        makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '300',
+                            { 0, 0, 1 })
+                        score = score + 300
+                        combo = combo + 1
+                    elseif at <= 17 then
+                        makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '100',
+                            { 0, 0.5, 0 })
+                        score = score + 100
+                        combo = combo + 1
+                    elseif at <= 23 then
+                        makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, '50',
+                            { 0.8, 0, 0 })
+                        score = score + 50
+                        combo = combo + 1
+                    else
+                        makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, 'X',
+                            { 1, 0, 0 })
+                        combo = 0
+                    end
+                    removeCircle(circle.id)
+                else -- incorrect circle (wrong order)
                     makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, 'X', { 1, 0, 0 })
-                    combo = 0
                 end
-                removeCircle(circle.id)
-            else -- incorrect circle (wrong order)
-                makeHitScore(circle.x + 40 + circle.size / 2 - 3, circle.y + circle.size / 2 - 3, 'X', { 1, 0, 0 })
             end
         end
     end
@@ -235,7 +257,13 @@ scene.draw = function(screen)
 
         --draw cursor
         love.graphics.setColor(1, 1, 1, 1)
+        love.graphics.circle("fill", currentX + 40, currentY, 6)
+        love.graphics.setColor(0.7, 0.7, 0.7, 1)
         love.graphics.circle("fill", currentX + 40, currentY, 5)
+
+        if game.chart and game.chart.draw then
+            game.chart.draw()
+        end
     else
         love.graphics.circle("fill", currentX, currentY, 5)
         love.graphics.setColor(0.3, 0.3, 0.3, 1)
@@ -255,10 +283,11 @@ scene.draw = function(screen)
 
         if game.debug then
             local a = 0
-            for i, v in pairs(circles) do
-                a = a + 1
-                love.graphics.print(tostring(i) .. ' ' .. tostring(v), 0, a * 20 - 20)
-            end
+            love.graphics.print(tostring(gameCounter), 0, 0)
+            -- for i, v in pairs(circles) do
+            --     a = a + 1
+            --     love.graphics.print(tostring(i) .. ' ' .. tostring(v), 0, a * 20 - 20)
+            -- end
         end
     end
     if white > 0 then
@@ -275,6 +304,7 @@ scene.reset = function()
     white = 1
     firsttouch = false
     startgame = false
+    initializedChart = false
 
     currentX = -20
     currentY = -20

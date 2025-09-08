@@ -34,8 +34,10 @@ homescreen.handleInput = function(button)
 
     if game.songselect then
         if button == 'a' then
-            game.selectedChart = charts[songIndex]:sub(1, -5)
-            game.chart = require('charts/' .. game.selectedChart)
+            game.selectedChart = charts[songIndex]
+            game.chart = require('charts/' .. game.selectedChart .. '/chart')
+            game.music = love.audio.newSource('charts/' .. game.selectedChart .. '/song.mp3', 'stream')
+
             scene.fadeout = true
             unInithomescreen()
         elseif button == 'b' then
@@ -65,7 +67,7 @@ end
 
 homescreen.draw = function(screen)
     if screen ~= 'bottom' then
-        love.graphics.setColor(0.8,0.85,0.75, 0.7)
+        love.graphics.setColor(0.8, 0.85, 0.75, 0.7)
         love.graphics.rectangle('fill', 0, 0, 400, 240)
 
         love.graphics.setColor(0.658, 0.733, 0.639, 1)
@@ -75,9 +77,9 @@ homescreen.draw = function(screen)
 
         love.graphics.setFont(game.fonts.gamer)
         love.graphics.setColor(0.2, 0.2, 0.2, 1)
-        love.graphics.print('EPIC RHYTHM GAME', 18, 18)
+        love.graphics.print('3ds RhythmGame', 16, 18)
         love.graphics.setColor(0.6, 0.8, 0.6, 1)
-        love.graphics.print('EPIC RHYTHM GAME', 20, 20)
+        love.graphics.print('3ds RhythmGame', 18, 20)
 
         love.graphics.setFont(game.fonts.gamersmall)
         love.graphics.setColor(0.2, 0.2, 0.2, 1)
@@ -98,7 +100,7 @@ homescreen.draw = function(screen)
             love.graphics.print('>', 7, pointerpos)
         end
     else
-        love.graphics.setColor(0.8,0.85,0.75, 0.6)
+        love.graphics.setColor(0.8, 0.85, 0.75, 0.6)
         love.graphics.rectangle('fill', 0, 0, 320, 240)
 
         if game.songselect then
@@ -109,7 +111,7 @@ homescreen.draw = function(screen)
             love.graphics.setFont(game.fonts.basicsmall)
             love.graphics.print('>', 34, 34 + (songIndex - 1) * 22)
             for i, v in ipairs(charts) do
-                love.graphics.print(v:sub(1, -5), i == songIndex and 52 or 34, 34 + (i - 1) * 22)
+                love.graphics.print(v, i == songIndex and 52 or 34, 34 + (i - 1) * 22)
             end
         end
     end
