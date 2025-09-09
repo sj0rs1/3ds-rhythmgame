@@ -11,4 +11,4 @@
 - Open the LÖVE Potion app on your Homebrew Launcher  
 
 ## Controls
-- Click → Left Shoulder / Q
+- Click → Any button
