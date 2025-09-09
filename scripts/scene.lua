@@ -150,7 +150,7 @@ scene.update = function()
         return
     end
     gameCounter = gameCounter + 1
-    if gameCounter == 1 then
+    if gameCounter == 1 and game.music then
         game.music:play()
     end
     updateCircles()
@@ -160,8 +160,20 @@ end
 scene.handleInput = function(button)
     if not startgame then return end
     if game.paused then
+        if button == 'start' then
+            game.paused = false
+            if game.music then
+                game.music:seek(gameCounter / 60, "seconds")
+                game.music:play()
+            end
+        end
     else
-        if button == 'leftshoulder' then
+        if button == 'start' then
+            game.paused = true
+            if game.music then
+                game.music:pause()
+            end
+        elseif button ~= 'select' then
             local circle, index = getTouchingCircle()
             if circle then
                 if index == 1 then -- correct circle
@@ -198,6 +210,11 @@ end
 scene.draw = function(screen)
     love.graphics.setFont(game.fonts.basicsmall)
     if screen ~= 'bottom' then
+        --background
+        if game.background then
+            love.graphics.setColor(1, 1, 1, 1 - game.options.bgdim / 100)
+            love.graphics.draw(game.background, 40, 0)
+        end
         --borders
         love.graphics.setColor(0.15, 0.15, 0.15, 1)
         love.graphics.rectangle('fill', 0, 0, 40, 240)
@@ -255,15 +272,15 @@ scene.draw = function(screen)
             end
         end
 
+        if game.chart and game.chart.draw then
+            game.chart.draw(gameCounter)
+        end
+
         --draw cursor
         love.graphics.setColor(1, 1, 1, 1)
         love.graphics.circle("fill", currentX + 40, currentY, 6)
         love.graphics.setColor(0.7, 0.7, 0.7, 1)
         love.graphics.circle("fill", currentX + 40, currentY, 5)
-
-        if game.chart and game.chart.draw then
-            game.chart.draw()
-        end
     else
         love.graphics.circle("fill", currentX, currentY, 5)
         love.graphics.setColor(0.3, 0.3, 0.3, 1)
@@ -274,6 +291,13 @@ scene.draw = function(screen)
             love.graphics.rectangle('fill', 50, 50, 320 - 50 * 2, 240 - 50 * 2)
             love.graphics.setColor(1, 1, 1, 1)
             love.graphics.printf("Touch here!", 0, 105, 320, "center")
+        end
+
+        if game.paused then
+            love.graphics.setColor(1, 1, 1, 0.2)
+            love.graphics.rectangle('fill', 50, 50, 320 - 50 * 2, 240 - 50 * 2)
+            love.graphics.setColor(1, 1, 1, 1)
+            love.graphics.printf("Paused", 0, 105, 320, "center")
         end
 
         love.graphics.setColor(1, 1, 1, 1)

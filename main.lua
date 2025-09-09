@@ -16,15 +16,24 @@ game = {
     chart = nil,
     music = nil,
     paused = false,
+    background = nil,
+    optionsopen = false,
+    options = {
+        bgdim = 0
+    },
     reset = function()
-        game.music:stop()
+        if game.music then
+            game.music:stop() 
+        end
         package.loaded['charts/' .. game.selectedChart .. '/chart'] = nil
 
         game.ingame = false
         game.songselect = false
+        game.options = false
         game.homescreen = true
         game.chart = nil
         game.music = nil
+        game.background = nil
         game.selectedChart = ''
 
         homescreen.reset()

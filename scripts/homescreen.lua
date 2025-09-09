@@ -2,7 +2,13 @@ local homescreen = {}
 local dots = {}
 local menuIndex = 1
 local songIndex = 1
+local optionIndex = 1
+local selectedInfo = { difficulty = 0, duration = '00:00', background = nil }
 local charts = love.filesystem.getDirectoryItems('charts')
+local options = {
+    { type = 'toggle', value = false, name = 'TestToggle' },
+    { type = 'slider', value = 0,     min = 0,            modifier = 10, max = 100, name = 'TestSlider' }
+}
 
 for i = 1, 5 do
     table.insert(dots, {
@@ -15,20 +21,43 @@ local fadeouttimer = 0
 local fadeout = false
 function unInithomescreen()
     fadeout = true
+    selectedInfo = { difficulty = 0, duration = '00:00', background = nil }
+end
+
+function updateSong()
+    local chart = dofile("charts/" .. charts[songIndex] .. "/chart.lua")
+    local difficulty = chart.difficulty
+    local duration = chart.finishCount
+    chart = nil
+    collectgarbage()
+    selectedInfo.duration = string.format("%02d:%02d", math.floor(duration / 3600), (math.floor(duration / 60) % 60))
+    selectedInfo.difficulty = difficulty
+    if love.filesystem.getInfo('charts/' .. charts[songIndex] .. '/background' .. imageExtension) then
+        selectedInfo.background = love.graphics.newImage('charts/' ..
+            charts[songIndex] .. '/background' .. imageExtension)
+    else
+        selectedInfo.background = nil
+    end
 end
 
 homescreen.handleInput = function(button)
     if button == 'dpup' then
         if game.songselect then
             songIndex = math.max(songIndex - 1, 1)
+            updateSong()
+        elseif game.optionsopen then
+            optionIndex = math.max(optionIndex - 1, 1)
         else
             menuIndex = math.max(menuIndex - 1, 1)
         end
     elseif button == 'dpdown' then
         if game.songselect then
             songIndex = math.min(songIndex + 1, #charts)
+            updateSong()
+        elseif game.optionsopen then
+            optionIndex = math.min(optionIndex + 1, #options)
         else
-            menuIndex = math.min(menuIndex + 1, 2)
+            menuIndex = math.min(menuIndex + 1, 3)
         end
     end
 
@@ -36,18 +65,45 @@ homescreen.handleInput = function(button)
         if button == 'a' then
             game.selectedChart = charts[songIndex]
             game.chart = require('charts/' .. game.selectedChart .. '/chart')
-            game.music = love.audio.newSource('charts/' .. game.selectedChart .. '/song.mp3', 'stream')
+            if love.filesystem.getInfo('charts/' .. game.selectedChart .. '/song.mp3') then
+                game.music = love.audio.newSource('charts/' .. game.selectedChart .. '/song.mp3', 'stream')
+            end
+            if love.filesystem.getInfo('charts/' .. game.selectedChart .. '/background' .. imageExtension) then
+                game.background = love.graphics.newImage('charts/' ..
+                    game.selectedChart .. '/background' .. imageExtension)
+            end
 
             scene.fadeout = true
             unInithomescreen()
         elseif button == 'b' then
             game.songselect = false
         end
+    elseif game.optionsopen then
+        print(button)
+        local option = options[optionIndex]
+        if button == 'a' then
+            if option.type == 'toggle' then
+                options[optionIndex].value = not options[optionIndex].value
+            end
+        elseif button == 'dpleft' then
+            if option.type == 'slider' then
+                options[optionIndex].value = math.max(option.min, option.value - option.modifier)
+            end
+        elseif button == 'dpright' then
+            if option.type == 'slider' then
+                options[optionIndex].value = math.min(option.max, option.value + option.modifier)
+            end
+        elseif button == 'b' then
+            game.optionsopen = false
+        end
     else
         if button == 'a' then
-            if menuIndex == 1 then     -- play
+            if menuIndex == 1 then -- play
+                updateSong()
                 game.songselect = true
-            elseif menuIndex == 2 then -- quit
+            elseif menuIndex == 2 then -- options
+                game.optionsopen = true
+            elseif menuIndex == 3 then -- quit
                 love.event.quit()
             end
         end
@@ -88,11 +144,16 @@ homescreen.draw = function(screen)
         love.graphics.print('START', 25, 120)
 
         love.graphics.setColor(0.2, 0.2, 0.2, 1)
-        love.graphics.print('EXIT', 23, 148)
+        love.graphics.print('OPTIONS', 23, 148)
         love.graphics.setColor(0.6, 0.8, 0.6, 1)
-        love.graphics.print('EXIT', 25, 150)
+        love.graphics.print('OPTIONS', 25, 150)
 
-        if not game.songselect then
+        love.graphics.setColor(0.2, 0.2, 0.2, 1)
+        love.graphics.print('EXIT', 23, 178)
+        love.graphics.setColor(0.6, 0.8, 0.6, 1)
+        love.graphics.print('EXIT', 25, 180)
+
+        if not game.songselect and not game.optionsopen then
             local pointerpos = 120 + (menuIndex - 1) * 30
             love.graphics.setColor(0.2, 0.2, 0.2, 1)
             love.graphics.print('>', 6, pointerpos - 1)
@@ -104,14 +165,33 @@ homescreen.draw = function(screen)
         love.graphics.rectangle('fill', 0, 0, 320, 240)
 
         if game.songselect then
-            love.graphics.setColor(0.8, 0.8, 0.8, 1)
-            love.graphics.rectangle('fill', 30, 30, 320 - 30 * 2, 240 - 30 * 2)
+            love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
+            love.graphics.rectangle('fill', 10, 10, 320 - 10 * 2, 240 - 10 * 2)
 
             love.graphics.setColor(0, 0, 0, 1)
             love.graphics.setFont(game.fonts.basicsmall)
-            love.graphics.print('>', 34, 34 + (songIndex - 1) * 22)
+            love.graphics.print('>', 14, 14 + (songIndex - 1) * 22)
             for i, v in ipairs(charts) do
-                love.graphics.print(v, i == songIndex and 52 or 34, 34 + (i - 1) * 22)
+                love.graphics.print(v, i == songIndex and 34 or 14, 14 + (i - 1) * 22)
+            end
+
+            love.graphics.print('Difficulty: ' .. selectedInfo.difficulty, 200, 14)
+            love.graphics.print('Duration: ' .. selectedInfo.duration, 164, 36)
+            if selectedInfo.background then
+                love.graphics.setColor(1, 1, 1, 1)
+                love.graphics.draw(selectedInfo.background, 164, 60, 0, 0.435, 0.435)
+            end
+        end
+
+        if game.optionsopen then
+            love.graphics.setColor(0.8, 0.8, 0.8, 0.8)
+            love.graphics.rectangle('fill', 10, 10, 320 - 10 * 2, 240 - 10 * 2)
+
+            love.graphics.setColor(0, 0, 0, 1)
+            love.graphics.setFont(game.fonts.basicsmall)
+            love.graphics.print('>', 14, 14 + (optionIndex - 1) * 22)
+            for i, v in ipairs(options) do
+                love.graphics.print(v.name .. ' ' .. tostring(v.value), i == optionIndex and 34 or 14, 14 + (i - 1) * 22)
             end
         end
     end

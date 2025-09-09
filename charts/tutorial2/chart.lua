@@ -1,5 +1,5 @@
 local chart = {
-    difficulty = 1,
+    difficulty = 2,
     finishCount = 1400,
     circles = {
         { 40, 110, 20, { 1.0, 0.2, 0.2 }, 1, 90, 780 },
