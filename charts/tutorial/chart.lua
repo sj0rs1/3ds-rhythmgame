@@ -11,8 +11,8 @@ local chart = {
 --custom code
 local messages = {
     { start = 20, finish = 150, message = 'Welcome to the tutorial!' },
-    { start = 150, finish = 360, message = 'Using the touchscreen, place and move your cursor on the screen.' },
-    { start = 360, finish = 660, message = 'When a circle appears, hover over it and use any button to click when the approach circle overlaps.' },
+    { start = 150, finish = 360, message = 'Using the touchscreen, place and\nmove your cursor on the screen.' },
+    { start = 360, finish = 660, message = 'When a circle appears, hover over\nit and use any button to click when\nthe approach circle overlaps.' },
     { start = 660, finish = 780, message = 'Try it out!' },
     { start = 1170, finish = 1290, message = "That's it!\n\nGood luck!" },
 }
@@ -21,8 +21,8 @@ chart.draw = function(gameCounter)
     love.graphics.setColor(1, 1, 1, 1)
     for i, v in pairs(messages) do
         if gameCounter >= v.start and gameCounter <= v.finish then
-            --love.graphics.print(v.message, v.x, v.y)
-            love.graphics.printf(v.message, 40, 20, 320, "center")
+            love.graphics.print(v.message, 40, 20)
+            --love.graphics.printf(v.message, 40, 20, 320, "center")
         end
     end
 end

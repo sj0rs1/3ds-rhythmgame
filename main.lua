@@ -1,4 +1,5 @@
 local nest = love.system.getOS() == 'Windows' and require("nest").init({ console = "3ds" }) or nil
+json = require("json/json")
 is3ds = string.lower(love._console) == '3ds' and love.system.getOS() == 'Horizon'
 fontExtension = is3ds and '.bcfnt' or '.ttf'
 imageExtension = is3ds and '.t3x' or '.png'
@@ -29,7 +30,7 @@ game = {
 
         game.ingame = false
         game.songselect = false
-        game.options = false
+        game.optionsopen = false
         game.homescreen = true
         game.chart = nil
         game.music = nil

@@ -168,12 +168,13 @@ scene.handleInput = function(button)
             end
         end
     else
-        if button == 'start' then
+        if button == 'start' and not is3ds then
             game.paused = true
             if game.music then
                 game.music:pause()
             end
         elseif button ~= 'select' then
+            print(gameCounter)
             local circle, index = getTouchingCircle()
             if circle then
                 if index == 1 then -- correct circle
@@ -235,12 +236,6 @@ scene.draw = function(screen)
         love.graphics.line(360, 239, 350, 239)
         love.graphics.line(360, 229, 360, 239)
 
-        --draw hitscores
-        for i, v in pairs(hitScores) do
-            love.graphics.setColor(v.color[1], v.color[2], v.color[3], 1)
-            love.graphics.print(v.text, v.x, v.y)
-        end
-
         --draw click circles
         if startgame then
             for i = #circles, 1, -1 do
@@ -257,8 +252,13 @@ scene.draw = function(screen)
                     love.graphics.circle("fill", v.x + 40 + size, v.y + size, size)
 
                     --approach circle
-                    love.graphics.setColor(1, 1, 1, 0.8)
                     if v.approachtime >= 0 then
+                        love.graphics.setColor(1,1,1, 0.8)
+                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
+                            size + (30 * v.approachtime / v.approachtotal) + 1)
+                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
+                            size + (30 * v.approachtime / v.approachtotal) - 1)
+                        love.graphics.setColor(0,0,0, 0.8)
                         love.graphics.circle("line", v.x + 40 + size, v.y + size,
                             size + (30 * v.approachtime / v.approachtotal))
                     end
@@ -274,6 +274,12 @@ scene.draw = function(screen)
 
         if game.chart and game.chart.draw then
             game.chart.draw(gameCounter)
+        end
+
+        --draw hitscores
+        for i, v in pairs(hitScores) do
+            love.graphics.setColor(v.color[1], v.color[2], v.color[3], 1)
+            love.graphics.print(v.text, v.x, v.y)
         end
 
         --draw cursor

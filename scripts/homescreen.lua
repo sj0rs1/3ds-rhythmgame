@@ -5,9 +5,28 @@ local songIndex = 1
 local optionIndex = 1
 local selectedInfo = { difficulty = 0, duration = '00:00', background = nil }
 local charts = love.filesystem.getDirectoryItems('charts')
-local options = {
-    { type = 'toggle', value = false, name = 'TestToggle' },
-    { type = 'slider', value = 0,     min = 0,            modifier = 10, max = 100, name = 'TestSlider' }
+local options = {}
+options = {
+    {
+        type = 'slider',
+        value = 0,
+        min = 0,
+        modifier = 5,
+        max = 100,
+        name = 'Background dim',
+        update = function(i, value)
+            options[i].value = value
+            game.options.bgdim = value
+        end
+    },
+    -- {
+    --     type = 'toggle',
+    --     value = false,
+    --     name = 'TestToggle',
+    --     update = function(i, value)
+    --         options[i].value = value
+    --     end
+    -- },
 }
 
 for i = 1, 5 do
@@ -25,7 +44,7 @@ function unInithomescreen()
 end
 
 function updateSong()
-    local chart = dofile("charts/" .. charts[songIndex] .. "/chart.lua")
+    local chart = love.filesystem.load("charts/" .. charts[songIndex] .. "/chart.lua")()
     local difficulty = chart.difficulty
     local duration = chart.finishCount
     chart = nil
@@ -79,7 +98,6 @@ homescreen.handleInput = function(button)
             game.songselect = false
         end
     elseif game.optionsopen then
-        print(button)
         local option = options[optionIndex]
         if button == 'a' then
             if option.type == 'toggle' then
@@ -87,13 +105,18 @@ homescreen.handleInput = function(button)
             end
         elseif button == 'dpleft' then
             if option.type == 'slider' then
-                options[optionIndex].value = math.max(option.min, option.value - option.modifier)
+                option.update(optionIndex, math.max(option.min, option.value - option.modifier))
             end
         elseif button == 'dpright' then
             if option.type == 'slider' then
-                options[optionIndex].value = math.min(option.max, option.value + option.modifier)
+                option.update(optionIndex, math.min(option.max, option.value + option.modifier))
             end
         elseif button == 'b' then
+            local settingsSaved = {}
+            for i,v in pairs(options) do
+                settingsSaved[v.name] = v.value
+            end
+            love.filesystem.write('settings.json', json.encode(settingsSaved, { indent = true }))
             game.optionsopen = false
         end
     else
@@ -169,14 +192,14 @@ homescreen.draw = function(screen)
             love.graphics.rectangle('fill', 10, 10, 320 - 10 * 2, 240 - 10 * 2)
 
             love.graphics.setColor(0, 0, 0, 1)
-            love.graphics.setFont(game.fonts.basicsmall)
+            love.graphics.setFont(game.fonts.basictiny)
             love.graphics.print('>', 14, 14 + (songIndex - 1) * 22)
             for i, v in ipairs(charts) do
                 love.graphics.print(v, i == songIndex and 34 or 14, 14 + (i - 1) * 22)
             end
 
-            love.graphics.print('Difficulty: ' .. selectedInfo.difficulty, 200, 14)
-            love.graphics.print('Duration: ' .. selectedInfo.duration, 164, 36)
+            love.graphics.print('Difficulty: ' .. selectedInfo.difficulty, 220, 14)
+            love.graphics.print('Duration: ' .. selectedInfo.duration, 188, 36)
             if selectedInfo.background then
                 love.graphics.setColor(1, 1, 1, 1)
                 love.graphics.draw(selectedInfo.background, 164, 60, 0, 0.435, 0.435)
@@ -191,7 +214,12 @@ homescreen.draw = function(screen)
             love.graphics.setFont(game.fonts.basicsmall)
             love.graphics.print('>', 14, 14 + (optionIndex - 1) * 22)
             for i, v in ipairs(options) do
-                love.graphics.print(v.name .. ' ' .. tostring(v.value), i == optionIndex and 34 or 14, 14 + (i - 1) * 22)
+                love.graphics.print(
+                    v.name ..
+                    ' ' ..
+                    (v.type == 'slider' and i == optionIndex and '<- ' or '') ..
+                    tostring(v.value) .. (v.type == 'slider' and i == optionIndex and ' ->' or ''),
+                    i == optionIndex and 34 or 14, 14 + (i - 1) * 22)
             end
         end
     end
@@ -214,6 +242,15 @@ homescreen.reset = function()
     fadeout = false
     menuIndex = 1
     songIndex = 1
+end
+
+if love.filesystem.getInfo('settings.json') then
+    local saved = json.decode(love.filesystem.read('settings.json'))
+    for i,v in pairs(options) do
+        if saved[v.name] then
+            v.update(i, saved[v.name])
+        end
+    end
 end
 
 return homescreen
