@@ -20,7 +20,8 @@ game = {
     background = nil,
     optionsopen = false,
     options = {
-        bgdim = 0
+        bgdim = 0,
+        flipped = false
     },
     reset = function()
         if game.music then
@@ -54,7 +55,7 @@ function love.load()
     game.fonts.gamer = love.graphics.newFont("assets/fonts/gamer" .. fontExtension, is3ds and 48 or 36)
     game.fonts.gamersmall = love.graphics.newFont("assets/fonts/gamer" .. fontExtension, is3ds and 32 or 24)
     game.fonts.basic = love.graphics.newFont(is3ds and 28 or 24)
-    game.fonts.basicsmall = love.graphics.newFont(is3ds and 24 or 18)
+    game.fonts.basicsmall = love.graphics.newFont(is3ds and 22 or 18)
     game.fonts.basictiny = love.graphics.newFont(is3ds and 16 or 14)
 end
 
@@ -72,11 +73,21 @@ function love.update(dt)
 end
 
 function love.draw(screen)
+    if game.options.flipped then
+        love.graphics.push()
+        love.graphics.translate(0, love.graphics.getHeight())
+        love.graphics.scale(1, -1)
+    end
+
     if game.homescreen then
         homescreen.draw(screen)
     end
     if game.ingame then
         scene.draw(screen)
+    end
+
+    if game.options.flipped then
+        love.graphics.pop()
     end
 end
 

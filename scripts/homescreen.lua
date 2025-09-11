@@ -19,14 +19,15 @@ options = {
             game.options.bgdim = value
         end
     },
-    -- {
-    --     type = 'toggle',
-    --     value = false,
-    --     name = 'TestToggle',
-    --     update = function(i, value)
-    --         options[i].value = value
-    --     end
-    -- },
+    {
+        type = 'toggle',
+        value = false,
+        name = 'Flip screens',
+        update = function(i, value)
+            options[i].value = value
+            game.options.flipped = value
+        end
+    },
 }
 
 for i = 1, 5 do
@@ -60,6 +61,14 @@ function updateSong()
 end
 
 homescreen.handleInput = function(button)
+    if game.options.flipped then
+        if button == 'dpup' then
+            button = 'dpdown'
+        elseif button == 'dpdown' then
+            button = 'dpup'
+        end
+    end
+    
     if button == 'dpup' then
         if game.songselect then
             songIndex = math.max(songIndex - 1, 1)
@@ -113,7 +122,7 @@ homescreen.handleInput = function(button)
             end
         elseif button == 'b' then
             local settingsSaved = {}
-            for i,v in pairs(options) do
+            for i, v in pairs(options) do
                 settingsSaved[v.name] = v.value
             end
             love.filesystem.write('settings.json', json.encode(settingsSaved, { indent = true }))
@@ -246,7 +255,7 @@ end
 
 if love.filesystem.getInfo('settings.json') then
     local saved = json.decode(love.filesystem.read('settings.json'))
-    for i,v in pairs(options) do
+    for i, v in pairs(options) do
         if saved[v.name] then
             v.update(i, saved[v.name])
         end

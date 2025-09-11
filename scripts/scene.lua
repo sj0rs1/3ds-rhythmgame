@@ -67,7 +67,7 @@ function love.touchpressed(id, x, y, dx, dy, pressure)
     if not game.ingame then return end
     firsttouch = true
     currentX = x
-    currentY = y
+    currentY = game.options.flipped and 240 - y or y
 end
 
 function love.touchreleased(id)
@@ -78,7 +78,7 @@ end
 function love.touchmoved(id, x, y, dx, dy, pressure)
     if not game.ingame then return end
     currentX = x
-    currentY = y
+    currentY = game.options.flipped and 240 - y or y
 end
 
 function getTouchingCircle()
@@ -173,8 +173,10 @@ scene.handleInput = function(button)
             if game.music then
                 game.music:pause()
             end
-        elseif button ~= 'select' then
-            print(gameCounter)
+        elseif button == 'select' then
+            game.reset()
+            return
+        else
             local circle, index = getTouchingCircle()
             if circle then
                 if index == 1 then -- correct circle
