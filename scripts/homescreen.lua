@@ -110,7 +110,7 @@ homescreen.handleInput = function(button)
         local option = options[optionIndex]
         if button == 'a' then
             if option.type == 'toggle' then
-                options[optionIndex].value = not options[optionIndex].value
+                option.update(optionIndex, not option.value)
             end
         elseif button == 'dpleft' then
             if option.type == 'slider' then
