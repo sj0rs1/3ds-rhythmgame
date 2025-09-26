@@ -30,7 +30,7 @@ function makeCircle(x, y, size, color, number, approach, active)
         color = color,
         number = number
     })
-    circleCount = circleCount + 1
+    circleCount = circleCount + 1   
 end
 
 function makeHitScore(x, y, text, color)
@@ -66,8 +66,8 @@ end
 function love.touchpressed(id, x, y, dx, dy, pressure)
     if not game.ingame then return end
     firsttouch = true
-    currentX = x
-    currentY = game.options.flipped and 240 - y or y
+    currentX = game.options.flipped and (320 - x) or x
+    currentY = game.options.flipped and (240 - y) or y
 end
 
 function love.touchreleased(id)
@@ -77,7 +77,7 @@ end
 
 function love.touchmoved(id, x, y, dx, dy, pressure)
     if not game.ingame then return end
-    currentX = x
+    currentX = game.options.flipped and (320 - x) or x
     currentY = game.options.flipped and 240 - y or y
 end
 
@@ -255,12 +255,12 @@ scene.draw = function(screen)
 
                     --approach circle
                     if v.approachtime >= 0 then
-                        love.graphics.setColor(1,1,1, 0.8)
-                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
-                            size + (30 * v.approachtime / v.approachtotal) + 1)
-                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
-                            size + (30 * v.approachtime / v.approachtotal) - 1)
                         love.graphics.setColor(0,0,0, 0.8)
+                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
+                            size + (30 * v.approachtime / v.approachtotal) + 0.5)
+                        love.graphics.circle("line", v.x + 40 + size, v.y + size,
+                            size + (30 * v.approachtime / v.approachtotal) - 0.5)
+                        love.graphics.setColor(1,1,1, 0.8)
                         love.graphics.circle("line", v.x + 40 + size, v.y + size,
                             size + (30 * v.approachtime / v.approachtotal))
                     end
@@ -315,7 +315,7 @@ scene.draw = function(screen)
 
         if game.debug then
             local a = 0
-            love.graphics.print(tostring(gameCounter), 0, 0)
+            love.graphics.print(string.format("%02d:%02d / %02d:%02d", math.floor(gameCounter/3600), math.floor(gameCounter/60)%60, math.floor(game.chart.finishCount/3600), math.floor(game.chart.finishCount/60)%60), 0, 0)
             -- for i, v in pairs(circles) do
             --     a = a + 1
             --     love.graphics.print(tostring(i) .. ' ' .. tostring(v), 0, a * 20 - 20)

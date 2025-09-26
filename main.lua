@@ -75,10 +75,12 @@ end
 function love.draw(screen)
     if game.options.flipped then
         love.graphics.push()
-        love.graphics.translate(0, love.graphics.getHeight())
-        love.graphics.scale(1, -1)
+        local w, h = 400, 240
+        if screen == "bottom" then w, h = 320, 240 end
+        love.graphics.translate(w, h)
+        love.graphics.scale(-1, -1)
     end
-
+    
     if game.homescreen then
         homescreen.draw(screen)
     end
